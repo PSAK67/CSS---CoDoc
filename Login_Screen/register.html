@@ -3,32 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Screen</title>
+    <title>Register</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="login-container">
-        <h2>Login</h2>
+    <div class="register-container">
+        <h2>Register</h2>
         <form>
             <div class="input-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>
             </div>
             <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="input-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
-
             </div>
-            <div class="forgot-password">
-                <a href="forgot-password.html">Forgot Password?</a>
+            <div class="input-group">
+                <label for="confirm-password">Confirm Password</label>
+                <input type="password" id="confirm-password" name="confirm-password" required>
             </div>
-            <br>
-            <button type="submit">Login</button>
+            <button type="submit">Register</button>
 
             <div>
-                <p>Don't have an account register <a href="register.html">Register</a></p>
+                <p> Have an account register <a href="Login.html">Login</a></p>
             </div>
-            
         </form>
     </div>
 </body>

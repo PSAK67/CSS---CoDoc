@@ -1,0 +1,6 @@
+Flask
+flask-socketio
+flask-cors
+sqlalchemy
+flask-sqlalchemy
+flask_login

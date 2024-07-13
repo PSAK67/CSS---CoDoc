@@ -206,10 +206,10 @@ img {
 }
 
 .time_date {
-  color: #747474;
+  color: #000000;
   display: block;
   font-size: 12px;
-  margin: 8px 0 0;
+  text-align: end;
 }
 
 .received_withd_msg {

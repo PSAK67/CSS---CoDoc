@@ -72,8 +72,7 @@
             {% if j.sender_username==user_data["username"] %}
             <div class="outgoing_msg" id="{{ j.timestamp }}">
               <div class="sent_msg">
-                <p>{{ j.content }}</p>
-                <span class="time_date">{{ j.timestamp | ftime }}</span>
+                <p>{{ j.content }} <span class="time_date">{{ j.timestamp | ftime }}</span></p>
               </div>
             </div>
             {% else %}
@@ -82,8 +81,7 @@
               </div>
               <div class="received_msg">
                 <div class="received_withd_msg">
-                  <p>{{ j.content }}</p>
-                  <span class="time_date">{{ j.timestamp | ftime }}</span>
+                  <p>{{ j.content }} <span class="time_date">{{ j.timestamp | ftime }}</span></p>
                 </div>
               </div>
             </div>
@@ -99,14 +97,9 @@
                 </button>
               </form>
             </div>
-
           </div>
         </div>
       </div>
-
-      <p class="text-center top_spac"> Design by
-        <a target="_blank" href="https://www.linkedin.com/in/sunil-rajput-nattho-singh/">Sunil Rajput</a>
-      </p>
     </div>
   </div>
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

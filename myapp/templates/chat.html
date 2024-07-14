@@ -95,21 +95,21 @@
               </form>
             </div> -->
           </div>
-          <div class="inbox_chat">
-            {% for i in data %}
-            <a href="{{ url_for('views.chat',rid=i.room_id) }}">
-              <div class="chat_list" id="{{ i.room_id }}">
-                <div class="chat_people">
-                  <div class="chat_img"> <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil"> </div>
-                  <div class="chat_ib">
-                    <h5>{{ i["username"] }}</h5>
-                    <p id="last-message">{{ i["last_message"] }}</p>
-                  </div>
+        <div class="inbox_chat">
+          {% for i in data %}
+          <a href="{{ url_for('views.chat',rid=i.room_id) }}">
+            <div class="chat_list" id="{{ i.room_id }}">
+              <div class="chat_people">
+                <div class="chat_img"> <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil"> </div>
+                <div class="chat_ib">
+                  <h5>{{ i["username"] }}</h5>
+                  <p id="last-message">{{ i["last_message"] }}</p>
                 </div>
               </div>
-            </a>
-            {% endfor %}
-          </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
         </div>
         <div class="mesgs">
           <div class="msg_history">
@@ -118,6 +118,7 @@
             <div class="outgoing_msg" id="{{ j.timestamp }}">
               <div class="sent_msg">
                 <p>{{ j.content }} <span class="time_date">{{ j.timestamp | ftime }}</span></p>
+                <!-- <span class="time_date">{{ j.timestamp | ftime }}</span> -->
               </div>
             </div>
             {% else %}
@@ -127,6 +128,7 @@
               <div class="received_msg">
                 <div class="received_withd_msg">
                   <p>{{ j.content }} <span class="time_date">{{ j.timestamp | ftime }}</span></p>
+                  <!-- <span class="time_date">{{ j.timestamp | ftime }}</span> -->
                 </div>
               </div>
             </div>
@@ -144,139 +146,159 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        </div>
+        </div>
+        </div>
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        
+        <script type="text/javascript">
 
-  <script type="text/javascript">
-
-    // THIS FUNCTION SHOULD SCROLL DOWN AUTOMATICALLY
-    //let scrollingElement = (document.scrollingElement || document.body)
-    let msgH = document.querySelectorAll(".msg_history > div"), CurrentLen;
-    let init = () => {
-      CurrentLen = msgH.length;
-    }
-    init();
-    let validatePosition = () => {
-      if (msgH.length === CurrentLen) {
-        msgH[msgH.length - 1].setAttribute("id", "last_message");
-        for (var i; i < msgH.length; i++) {
-          if (msgH[i].id === "last_message" && msgH[i] !== msgH.length - 1) {
-            msgH[i].removeAttribute("id");
-            msgH[msgH.length - 1].setAttribute("id", "last_message");
+          // THIS FUNCTION SHOULD SCROLL DOWN AUTOMATICALLY
+          //let scrollingElement = (document.scrollingElement || document.body)
+          let msgH = document.querySelectorAll(".msg_history > div"), CurrentLen;
+          let init = () => {
+            CurrentLen = msgH.length;
           }
-        }
-      }
-    }
-    let scrollDown = () => {
-      //scrollingElement.scrollTop = scrollingElement.scrollHeight;
-      //$container.animate({scrollTop: $container[0].scrollHeight }, "slow");
-      validatePosition();
-      location.href = "#last_message";
-      init();
-    }
+          init();
+          let validatePosition = () => {
+            if (msgH.length === CurrentLen) {
+              msgH[msgH.length - 1].setAttribute("id", "last_message");
+              for (var i; i < msgH.length; i++) {
+                if (msgH[i].id === "last_message" && msgH[i] !== msgH.length - 1) {
+                  msgH[i].removeAttribute("id");
+                  msgH[msgH.length - 1].setAttribute("id", "last_message");
+                }
+              }
+            }
+          }
+          let scrollDown = () => {
+            //scrollingElement.scrollTop = scrollingElement.scrollHeight;
+            //$container.animate({scrollTop: $container[0].scrollHeight }, "slow");
+            validatePosition();
+            location.href = "#last_message";
+            init();
+          }
 
-    // SOCKET CODE
-    var socket = io.connect('http://' + document.domain + ':' + location.port + '/?rid=' + {{ room_id }} );
-    //scrollDown()
-    socket.on('connect', function () {
-      socket.emit('join-chat', {
-        rid: '{{ room_id }}'
-      })
-    })
+          // SOCKET CODE
+          var socket = io.connect('http://' + document.domain + ':' + location.port + '/?rid=' + {{ room_id }} );
+          //scrollDown()
+          socket.on('connect', function () {
+            socket.emit('join-chat', {
+              rid: '{{ room_id }}'
+            })
+          })
 
-    socket.on('joined-chat', function (msg) {
-      console.log(msg)
-    })
+          socket.on('joined-chat', function (msg) {
+            console.log(msg)
+          })
 
-    var form = $('#chat_form').on('submit', function (e) {
-      e.preventDefault()
-      let user_input = $('input.message').val()
+          var form = $('#chat_form').on('submit', function (e) {
+            e.preventDefault()
+            let user_input = $('input.message').val()
 
-      socket.emit('outgoing', {
-        timestamp: parseInt(Date.now() / 1000),
-        sender_username: "{{ user_data['username'] }}",
-        sender_id: {{ user_data["id"] }},
-      message : user_input,
-      rid: '{{ room_id }}'
-        } )
-    //scrollDown();
-    $('div.msg_history').append(`
-            <div class="outgoing_msg">
-              <div class="sent_msg">
-                <p>${user_input}</p>
-                <span class="time_date"> ${formatDate(new Date())}</span> </div>
-            </div>
-          `)
-    document.getElementById("last-message").innerHTML = user_input
-    $('input.message').val('').focus()
-    scrollDown();
-        } )
+            socket.emit('outgoing', {
+              timestamp: parseInt(Date.now() / 1000),
+              sender_username: "{{ user_data['username'] }}",
+              sender_id: {{ user_data["id"] }},
+            message : user_input,
+            rid: '{{ room_id }}'
+                } )
+          //scrollDown();
+          $('div.msg_history').append(`
+                    <div class="outgoing_msg">
+                      <div class="sent_msg">
+                        <p>${user_input}</p>
+                        <span class="time_date"> ${formatDate(new Date())}</span> </div>
+                    </div>
+                  `)
+          document.getElementById("last-message").innerHTML = user_input
+          $('input.message').val('').focus()
+          scrollDown();
+                } )
 
-    socket.on('message', function (msg) {
-      $('div.msg_history').append(`<div class="incoming_msg">
-              <div class="incoming_msg_img"> <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil"> </div>
-              <div class="received_msg">
-                <div class="received_withd_msg">
-                  <p>${msg.message}</p>
-                  <span class="time_date"> ${formatDate(new Date())}</span></div>
-              </div>
-            </div>`)
-      scrollDown();
-      document.getElementById("last-message").innerHTML = msg.message
-    })
+          socket.on('message', function (msg) {
+            $('div.msg_history').append(`<div class="incoming_msg">
+                      <div class="incoming_msg_img"> <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil"> </div>
+                      <div class="received_msg">
+                        <div class="received_withd_msg">
+                          <p>${msg.message}</p>
+                          <span class="time_date"> ${formatDate(new Date())}</span></div>
+                      </div>
+                    </div>`)
+            scrollDown();
+            document.getElementById("last-message").innerHTML = msg.message
+          })
 
-  </script>
-  <script>
-    function formatDate(date) {
-      // Get the hours, minutes, and seconds from the Date object.
-      const hours = date.getHours();
-      let formattedHours;
+        </script>
+        <script>
+          function formatDate(date) {
+            // Get the hours, minutes, and seconds from the Date object.
+            const hours = date.getHours();
+            let formattedHours;
 
-      if (hours > 12) {
-        formattedHours = hours - 12;
-      } else if (hours === 0) {
-        formattedHours = 12;
-      } else {
-        formattedHours = hours;
-      }
-      const minutes = date.getMinutes();
-      //const seconds = date.getSeconds();
+            if (hours > 12) {
+              formattedHours = hours - 12;
+            } else if (hours === 0) {
+              formattedHours = 12;
+            } else {
+              formattedHours = hours;
+            }
+            const minutes = date.getMinutes();
+            //const seconds = date.getSeconds();
 
-      // Get the month and day from the Date object.
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
+            // Get the month and day from the Date object.
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
 
-      // Create a string with the desired time format.
-      const timeFormat = `${formattedHours}:${minutes} ${(hours >= 12) ? 'PM' : 'AM'} | ${month}/${day}`;
+            // Create a string with the desired time format.
+            const timeFormat = `${formattedHours}:${minutes} ${(hours >= 12) ? 'PM' : 'AM'} | ${month}/${day}`;
 
-      // Return the time format string.
-      return timeFormat;
-    }
-  </script>
+            // Return the time format string.
+            return timeFormat;
+          }
+        </script>
+        
+        <script>
+          window.onload = function () {
+            let newChatBtn = document.querySelector('#new_chat_btn');
+            let newChatForm = document.querySelector('#new_chat_form');
+            let newChatoverlay = document.querySelector('#new_chat_overlay');
+            newChatBtn.onclick = (e) => {
+              if (e.target === newChatBtn) {
+                newChatForm.style.display = "block";
+                newChatoverlay.style.display = 'block';
 
-  <script>
-    window.onload = function () {
-      let newChatBtn = document.querySelector('#new_chat_btn');
-      let newChatForm = document.querySelector('#new_chat_form');
-      let newChatoverlay = document.querySelector('#new_chat_overlay');
-      newChatBtn.onclick = (e) => {
-        if (e.target === newChatBtn) {
-          newChatForm.style.display = "block";
-          newChatoverlay.style.display = 'block';
+              }
+            }
+            newChatoverlay.onclick = (e) => {
+              if (e.target === newChatoverlay) {
+                newChatForm.style.display = "none";
+                newChatoverlay.style.display = 'none';
+              }
+            }
+          }
+        </script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            const profileIcon = document.getElementById('profile-icon');
+            const profileMenu = document.getElementById('profile-menu');
+            const logoutLink = document.getElementById('logout-link');
 
-        }
-      }
-      newChatoverlay.onclick = (e) => {
-        if (e.target === newChatoverlay) {
-          newChatForm.style.display = "none";
-          newChatoverlay.style.display = 'none';
-        }
-      }
-    }
-  </script>
-</body>
+            profileIcon.addEventListener('click', function () {
+              profileMenu.classList.toggle('show');
+            });
 
-</html>
+            window.addEventListener('click', function (e) {
+              if (!profileIcon.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.classList.remove('show');
+              }
+            });
+
+            logoutLink.addEventListener('click', function () {
+              window.location.href = '/login';  // Update this URL to your login page URL
+            });
+          });
+        </script>    
+        </body>
+        </html>

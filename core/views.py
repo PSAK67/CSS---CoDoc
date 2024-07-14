@@ -57,3 +57,32 @@ def register():
         return redirect(url_for("views.login"))
 
     return render_template("authentication.html")
+
+@views.route("/login", methods=["GET", "POST"])
+def login():
+    """
+    Handles user login and session creation.
+
+    Returns:
+        Response: Flask response object.
+    """
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+
+        # Query the database for the inputted email address
+        user = User.query.filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            # Create a new session for the newly logged-in user
+            session["user"] = {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            }
+            return redirect(url_for("views.chat"))
+        else:
+            flash("Invalid login credentials. Please try again.")
+            return redirect(url_for("views.login"))
+
+    return render_template("auth.html")

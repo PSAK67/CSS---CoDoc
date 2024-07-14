@@ -77,7 +77,6 @@ body {
 .login-space .group .input,
 .login-space .group .button {
     width: 100%;
-    color: #fff;
     display: block;
 }
 
@@ -87,9 +86,6 @@ body {
     padding: 15px 20px;
     border-radius: 25px;
     background: #ffffff;
-    /* Change input background color to white */
-    color: #ffffff;
-    /* Input text color */
 }
 
 .login-space .group input[data-type="password"] {

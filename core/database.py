@@ -8,12 +8,12 @@ db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
+    username = db.Column(db.String(50), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    otp = db.Column(db.String(120), unique=True, nullable=False)
-    is_verified = db.Column(db.Boolean, nullable=False, default=False)
+    otp = db.Column(db.String(6), nullable=True)
+    is_verified = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password = pbkdf2_sha256.hash(password)
@@ -51,7 +51,8 @@ class ChatMessage(db.Model):
     timestamp = db.Column(db.String(20), nullable=False)
     sender_id = db.Column(db.Integer, nullable=False)
     sender_username = db.Column(db.String(50), nullable=False)
-    room_id = db.Column(db.String(50), db.ForeignKey('messages.room_id'), nullable=False)
+    room_id = db.Column(db.String(50), db.ForeignKey(
+        'messages.room_id'), nullable=False)
 
     def save_to_db(self):
         db.session.add(self)

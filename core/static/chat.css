@@ -314,3 +314,7 @@ img {
   height: 420px;
   overflow-y: auto;
 }
+
+.highlight {
+  background-color: #f0f0f0;
+}

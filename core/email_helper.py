@@ -1,36 +1,6 @@
-# from flask_mail import Message
-# from myapp import mail  # Ensure mail is initialized in your __init__.py
-
-
-# def send_verification_email(email, first_name, otp):
-#     SUBJECT = "Your OTP Code"
-#     BODY_HTML = f"""
-#     <html>
-#     <head></head>
-#     <body>
-#         <p>Hello {first_name},</p>
-#         <p>Your OTP code is <strong>{otp}</strong>.</p>
-#     </body>
-#     </html>
-#     """
-#     BODY_TEXT = f"Hello {first_name},\n\nYour OTP code is {otp}."
-
-#     msg = Message(
-#         subject=SUBJECT,
-#         recipients=[email],
-#         html=BODY_HTML,
-#         body=BODY_TEXT
-#     )
-
-#     try:
-#         mail.send(msg)
-#         print("Email sent!")
-#     except Exception as e:
-#         print(f"Failed to send email: {e}")
-
 from flask import render_template
 from flask_mail import Message
-from myapp import mail  # Ensure mail is initialized in your __init__.py
+from core import mail  # Ensure mail is initialized in your __init__.py
 
 
 def send_verification_email(email, username, otp):
@@ -47,6 +17,25 @@ def send_verification_email(email, username, otp):
         recipients=[email],
         html=html_content,
         body=text_content
+    )
+
+    try:
+        mail.send(msg)
+        print("Email sent!")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+
+def send_forget_email(email, link):
+    SUBJECT = "Reset Your Password"
+
+    html_content = render_template(
+        'reset_password.html', link=link)
+
+    msg = Message(
+        subject=SUBJECT,
+        recipients=[email],
+        html=html_content
     )
 
     try:

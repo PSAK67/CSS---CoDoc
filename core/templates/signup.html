@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to Tap n Chat</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <div class="container" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; width: 340px; margin: 0 auto;">
+        <header>
+        <h1
+          style="
+            font-size: 28px;
+            font-style: italic;
+            font-family: 'Brush Script MT', cursive;
+            color: #000000;
+            margin-bottom: 10px;
+          "
+        >
+          Tap n Chat
+        </h1>
+        </header>
+        <section class="welcome-message" style="margin-bottom: 20px;">
+            <h1 style="color: #5d5f60; margin-bottom: 10px;">Welcome to Tap n Chat!</h1>
+            <p style="color: #5d5f60; margin-bottom: 20px; font-size: 14px; text-align: left;">Hi {{first_name}}</p>
+            <p style="color: #5d5f60; margin-bottom: 20px; font-size: 14px;">Please use the code below to proceed with your email verification.</p>
+        </section>
+        <section class="verify-email" style="margin-bottom: 30px;">
+            <div class="verification-code" style="margin-bottom: 30px;">
+                <label for="verification-code" style="display: block; margin-bottom: 10px; color: #4a4a4a;">Verification code</label>
+                <input type="text" id="verification-code" value="{{ otp }}" readonly style="border: 1px solid #dcdfe6; padding: 15px; border-radius: 5px; width: 100%; box-sizing: border-box; font-size: 18px; color: #5d5f60; margin-bottom: 15px; text-align: center; font-size: 25px; font-weight: bold;">
+            </div>
+        </section>
+        <footer style="color: #a5a5a5; font-size: 12px; margin-top: 20px;">
+          © 2024 Tap n Chat | Dublin, Ireland
+        </footer>
+    </div>
+</body>
+</html>

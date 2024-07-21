@@ -1,16 +1,22 @@
 body {
     margin: 0;
-    color: #6a6f8c;
+    color: #9ea2b5;
     background: #ffffff;
     font: 600 16px/18px 'Open Sans', sans-serif;
+    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
+
 
 .login-box {
     width: 100%;
-    margin: 0 auto;
+    margin: 0;
+    margin-left: -150px;
     max-width: 525px;
     min-height: 580px;
-    background-color: #450dad;
+    background-color: #3b3a3a;
     box-shadow: 0 12px 15px 0 rgba(0, 0, 0, .24), 0 17px 50px 0 rgba(0, 0, 0, .19);
 }
 
@@ -19,8 +25,8 @@ body {
     max-height: 100vh;
     /* height: 100%; */
     position: absolute;
-    padding: 90px 70px 50px 70px;
-    background: rgba(84, 17, 167, 0.9);
+    padding: 70px 70px 50px 70px;
+    background: #3b3a3a;
 }
 
 .login-snip .login,
@@ -192,6 +198,7 @@ a {
 
 .card {
     width: 500px;
+    border: none !important;
 }
 
 ::placeholder {

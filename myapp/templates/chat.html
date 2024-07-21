@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat Window</title>
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css" />
+  <link rel="stylesheet" href="/static/chat.css" />
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" type="text/css"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+    integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+</head>
+
+<body style="background-color: #3b3a3a">
+  <div class="container">
+    <div class="container-header">
+      <div class="headind_srch2">
+        <div class="new_chat">
+          <div id="new_chat_overlay"></div>
+          <button id="new_chat_btn">
+            <i class="fa fa-plus"></i> New Chat
+          </button>
+          <form method="POST" action="{{ url_for('views.new_chat') }}" id="new_chat_form">
+            <label for="email"><strong>Email: </strong></label>
+            <input type="email" name="email" placeholder="enter friend's email here..." />
+            <input type="submit" value="Submit" />
+          </form>
+        </div>
+      </div>
+      <div class="user-profile">
+        <img src="https://ptetutorials.com/images/user-profile.png" alt="Profile" class="profile-icon"
+          id="profile-icon" />
+        <div class="dropdown-menu" id="profile-menu">
+          <a href="#profile">Profile</a>
+          <a href="#logout" id="logout-link">Logout</a>
+        </div>
+      </div>
+    </div>
+    <div class="messaging">
+      <div class="inbox_msg">
+        <div class="inbox_people">
+          <div class="headind_srch">
+            <div class="recent_heading">
+              <h4>Recent</h4>
+            </div>
+            <div class="srch_bar">
+              <div class="stylish-input-group">
+                <input type="text" class="search-bar" placeholder="Search" />
+                <span class="input-group-addon">
+                  <button type="button">
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="inbox_chat">
+            {% for i in data %}
+            <a href="{{ url_for('views.chat',rid=i.room_id) }}">
+              <div class="chat_list" id="{{ i.room_id }}">
+                <div class="chat_people">
+                  <div class="chat_img">
+                    <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil" />
+                  </div>
+                  <div class="chat_ib">
+                    <h5>{{ i["username"] }}</h5>
+                    <p id="last-message-{{ i.room_id }}" data-encrypted="true">{{ i["last_message"] }}</p>
+                  </div>
+                </div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="mesgs">
+          <div class="msg_history">
+            {% for j in messages %}
+            <div class="{{ 'outgoing_msg' if j.sender_username == user_data['username'] else 'incoming_msg' }}"
+              id="{{ j.timestamp }}">
+              {% if j.sender_username != user_data['username'] %}
+              <div class="incoming_msg_img">
+                <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil">
+              </div>
+              {% endif %}
+              <div class="{{ 'sent_msg' if j.sender_username == user_data['username'] else 'received_msg' }}">
+                <div class="{{ 'received_withd_msg' if j.sender_username != user_data['username'] }}">
+                  <p data-encrypted="true">
+                    {{ j.content }}
+                    <span class="time_date">{{ j.timestamp | ftime }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="type_msg">
+            <div class="input_msg_write">
+              <form id="chat_form">
+                <input type="text" class="message" placeholder="Type a message" />
+                <button class="msg_send_btn" type="submit">
+                  <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Decrypt the recent chat messages
+      const recentChats = document.querySelectorAll('.chat_ib p[data-encrypted="true"]');
+      recentChats.forEach(function (p) {
+        let encryptedMessage = p.textContent.trim();
+        let decryptedMessage = CryptoJS.AES.decrypt(encryptedMessage, "secret key").toString(CryptoJS.enc.Utf8);
+        if (decryptedMessage) {
+          p.textContent = decryptedMessage;
+        } else {
+          console.error("Decryption failed for:", encryptedMessage);
+        }
+      });
+
+      // Decrypt the chat messages
+      const encryptedMessages = document.querySelectorAll('.msg_history p[data-encrypted="true"]');
+      encryptedMessages.forEach(function (p) {
+        let encryptedMessage = p.textContent.trim();
+        let decryptedMessage = CryptoJS.AES.decrypt(encryptedMessage, "secret key").toString(CryptoJS.enc.Utf8);
+        if (decryptedMessage) {
+          let timeDate = p.querySelector('.time_date').textContent;
+          p.innerHTML = `${decryptedMessage}<span class="time_date">${timeDate}</span>`;
+        } else {
+          console.error("Decryption failed for:", encryptedMessage);
+        }
+      });
+    });
+  </script>
+  <script>
+    $(document).ready(function () {
+      var socket = io.connect(window.location.origin);
+      socket.on("new_message", function (data) {
+        var decrypted = CryptoJS.AES.decrypt(data.message, "secret key").toString(CryptoJS.enc.Utf8);
+        appendMessage(decrypted, "incoming", data.timestamp, data.profile_img_url);
+      });
+      $(".msg_send_btn").click(function () {
+        var message = $(".write_msg").val();
+        if (message !== "") {
+          var encrypted = CryptoJS.AES.encrypt(message, "secret key").toString();
+          var timestamp = new Date().getTime();
+          socket.emit("chat_message", { message: encrypted, timestamp: timestamp });
+          $(".write_msg").val("");
+          appendMessage(message, "outgoing", timestamp);
+        }
+      });
+
+      function appendMessage(message, type, timestamp, profileImgUrl) {
+        var msgClass = type === "incoming" ? "received_msg" : "sent_msg";
+        var timeDate = formatDate(new Date(timestamp));
+        var html = `<div class="${type === 'incoming' ? 'incoming_msg' : 'outgoing_msg'}">
+                      ${type === 'incoming' ? `<div class="incoming_msg_img"><img src="${profileImgUrl}" alt="sunil"></div>` : ''}
+                      <div class="${msgClass}">
+                        <div class="${type === 'incoming' ? 'received_withd_msg' : ''}">
+                          <p>${message}<span class="time_date">${timeDate}</span></p>
+                        </div>
+                      </div>
+                    </div>`;
+        $("#msg_history").append(html);
+      }
+    });
+  </script>
+  <script type="text/javascript">
+    let msgH = document.querySelectorAll(".msg_history > div"), CurrentLen;
+    let init = () => {
+      CurrentLen = msgH.length;
+    }
+    init();
+    let validatePosition = () => {
+      if (msgH.length === CurrentLen) {
+        msgH[msgH.length - 1].setAttribute("id", "last_message");
+        for (var i; i < msgH.length; i++) {
+          if (msgH[i].id === "last_message" && msgH[i] !== msgH.length - 1) {
+            msgH[i].removeAttribute("id");
+            msgH[msgH.length - 1].setAttribute("id", "last_message");
+          }
+        }
+      }
+    }
+    let scrollDown = () => {
+      validatePosition();
+      location.href = "#last_message";
+      init();
+    }
+
+    // SOCKET CODE
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/?rid=' + {{ room_id }} );
+    socket.on('connect', function () {
+      socket.emit('join-chat', {
+        rid: '{{ room_id }}'
+      })
+    })
+
+    socket.on('joined-chat', function (msg) {
+      console.log(msg)
+    })
+
+    var form = $('#chat_form').on('submit', function (e) {
+      e.preventDefault();
+      let user_input = $('input.message').val();
+      let encrypted = CryptoJS.AES.encrypt(user_input, 'secret key').toString();  // Use a secure key management system
+
+      socket.emit('outgoing', {
+        timestamp: parseInt(Date.now() / 1000),
+        sender_username: "{{ user_data['username'] }}",
+        sender_id: {{ user_data["id"] }},
+      message: encrypted,
+      rid: '{{ room_id }}'
+      });
+    // Add the encrypted message to the UI (or you could choose not to display it)
+    var timeDate = formatDate(new Date());
+    $('div.msg_history').append(`
+        <div class="outgoing_msg">
+          <div class="sent_msg">
+            <p>${user_input}<span class="time_date">${timeDate}</span></p>
+          </div>
+        </div>
+      `);
+    $('input.message').val('').focus();
+    scrollDown();
+    });
+
+    socket.on('message', function (msg) {
+      let decryptedMessage = CryptoJS.AES.decrypt(msg.message, 'secret key').toString(CryptoJS.enc.Utf8); // Decrypt the message
+      var timeDate = formatDate(new Date(msg.timestamp * 1000));
+      $('div.msg_history').append(`<div class="incoming_msg">
+          <div class="incoming_msg_img"> <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil"> </div>
+          <div class="received_msg">
+              <div class="received_withd_msg">
+                  <p>${decryptedMessage}<span class="time_date">${timeDate}</span></p>
+              </div>
+          </div>
+        </div>`);
+      scrollDown();
+    });
+  </script>
+  <script>
+    function formatDate(date) {
+      const hours = date.getHours();
+      let formattedHours = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const timeFormat = `${formattedHours}:${minutes} ${hours >= 12 ? "PM" : "AM"} | ${month}/${day}`;
+      return timeFormat;
+    }
+  </script>
+
+  <script>
+    window.onload = function () {
+      let newChatBtn = document.querySelector("#new_chat_btn");
+      let newChatForm = document.querySelector("#new_chat_form");
+      let newChatoverlay = document.querySelector("#new_chat_overlay");
+      newChatBtn.onclick = (e) => {
+        if (e.target === newChatBtn) {
+          newChatForm.style.display = "block";
+          newChatoverlay.style.display = "block";
+        }
+      };
+      newChatoverlay.onclick = (e) => {
+        if (e.target === newChatoverlay) {
+          newChatForm.style.display = "none";
+          newChatoverlay.style.display = "none";
+        }
+      };
+    };
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const profileIcon = document.getElementById("profile-icon");
+      const profileMenu = document.getElementById("profile-menu");
+      const logoutLink = document.getElementById("logout-link");
+
+      profileIcon.addEventListener("click", function () {
+        profileMenu.classList.toggle("show");
+      });
+
+      window.addEventListener("click", function (e) {
+        if (!profileIcon.contains(e.target) && !profileMenu.contains(e.target)) {
+          profileMenu.classList.remove("show");
+        }
+      });
+
+      logoutLink.addEventListener("click", function () {
+        window.location.href = "/login"; // Update this URL to your login page URL
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -20,6 +20,7 @@ img {
   display: flex;
   align-items: center;
   cursor: pointer;
+  position: relative;
 }
 
 .profile-icon {
@@ -35,6 +36,31 @@ img {
   overflow: hidden;
   width: 34%;
   border-radius: 20px;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 50px;
+  width: 150px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: 5px;
+  padding: 5px 0;
+}
+
+.dropdown-menu a {
+  padding: 10px 15px;
+  display: block;
+  color: black;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.dropdown-menu a:hover {
+  background-color: #f1f1f1;
 }
 
 .inbox_msg {
@@ -209,6 +235,7 @@ img {
   font-size: 14px;
   margin: 0;
   padding: 5px 10px 5px 12px;
+  margin: 5px 0px;
   width: 100%;
 }
 
@@ -286,4 +313,8 @@ img {
 .msg_history {
   height: 420px;
   overflow-y: auto;
+}
+
+.highlight {
+  background-color: #f0f0f0;
 }

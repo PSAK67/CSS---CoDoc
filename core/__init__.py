@@ -1,18 +1,31 @@
-import os
+from flask import Flask
+from flask_socketio import SocketIO
+from flask_cors import CORS
+from core.config import Config
+from core.database import db
+from flask_mail import Mail
+
+socket = SocketIO()
+cors = CORS()
+mail = Mail()
 
 
-class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key_here'
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL') or 'sqlite:///database.db'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
-    MAIL_SERVER = 'smtp.gmail.com'
-    MAIL_PORT = 587
-    MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get(
-        'MAIL_USERNAME') or "hamzatera007@gmail.com"  # Your Gmail address
-    MAIL_PASSWORD = os.environ.get(
-        'MAIL_PASSWORD') or "hcfp qdiz tymv amne"  # Your Gmail app password
-    MAIL_DEFAULT_SENDER = os.environ.get(
-        'MAIL_DEFAULT_SENDER') or "hamzatera007@gmail.com"  # Your default sender address
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+
+    # Initialize extensions
+    db.init_app(app)
+    socket.init_app(app, cors_allowed_origins="*")
+    mail.init_app(app)
+    cors.init_app(app)
+
+    with app.app_context():
+        # Create database tables if they don't exist
+        db.create_all()
+
+        # Register blueprints
+        from .views import views
+        app.register_blueprint(views)
+
+        return app, socket

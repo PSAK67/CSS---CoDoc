@@ -6,7 +6,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL') or 'sqlite:///database.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
+
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
@@ -16,3 +16,5 @@ class Config:
         'MAIL_PASSWORD') or "hcfp qdiz tymv amne"  # Your Gmail app password
     MAIL_DEFAULT_SENDER = os.environ.get(
         'MAIL_DEFAULT_SENDER') or "hamzatera007@gmail.com"  # Your default sender address
+    SECURITY_PASSWORD_SALT = os.environ.get(
+        'SECURITY_PASSWORD_SALT') or "your_password_salt"

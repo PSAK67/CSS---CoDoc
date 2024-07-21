@@ -8,7 +8,7 @@
 
 .container {
   max-width: 1170px;
-  background-color: #450dad;
+  background-color: #3b3a3a;
   margin: auto;
 }
 
@@ -20,6 +20,7 @@ img {
   display: flex;
   align-items: center;
   cursor: pointer;
+  position: relative;
 }
 
 .profile-icon {
@@ -30,15 +31,41 @@ img {
 }
 
 .inbox_people {
-  background: #31ABFF none repeat scroll 0 0;
+  background: #6785ff none repeat scroll 0 0;
   float: left;
   overflow: hidden;
-  width: 35%;
-  border-right: 1px solid #c4c4c4;
+  width: 34%;
+  border-radius: 20px;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 50px;
+  width: 150px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: 5px;
+  padding: 5px 0;
+}
+
+.dropdown-menu a {
+  padding: 10px 15px;
+  display: block;
+  color: black;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.dropdown-menu a:hover {
+  background-color: #f1f1f1;
 }
 
 .inbox_msg {
-  border: 1px solid #c4c4c4;
+  display: flex;
+  justify-content: space-between;
   clear: both;
   overflow: hidden;
 }
@@ -67,7 +94,7 @@ img {
 }
 
 .recent_heading h4 {
-  color: #05728f;
+  color: #ffffff;
   font-size: 21px;
   margin: auto;
 }
@@ -157,6 +184,7 @@ img {
   color: #000000;
   margin: auto
 }
+
 .chat_img {
   float: left;
   width: 11%;
@@ -180,7 +208,7 @@ img {
 }
 
 .inbox_chat {
-  height: 550px;
+  height: 420px;
   overflow-y: scroll;
 }
 
@@ -207,6 +235,7 @@ img {
   font-size: 14px;
   margin: 0;
   padding: 5px 10px 5px 12px;
+  margin: 5px 0px;
   width: 100%;
 }
 
@@ -225,12 +254,12 @@ img {
   float: left;
   padding: 30px 15px 0 25px;
   width: 65%;
-  /* background-image: url('images/background.svg'); */
-  background-color: #C9E2F2;
+  border-radius: 20px;
+  background-color: #1d1f2b;
 }
 
 .sent_msg p {
-  background: #05728f none repeat scroll 0 0;
+  background: #6785ff none repeat scroll 0 0;
   border-radius: 3px;
   font-size: 14px;
   margin: 0;
@@ -252,7 +281,7 @@ img {
 .input_msg_write input {
   background: rgba(0, 0, 0, 0) none repeat scroll 0 0;
   border: medium none;
-  color: #000000;
+  color: #ffffff;
   font-size: 15px;
   min-height: 48px;
   width: 100%;
@@ -282,6 +311,6 @@ img {
 }
 
 .msg_history {
-  height: 516px;
+  height: 420px;
   overflow-y: auto;
 }

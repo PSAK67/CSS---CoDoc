@@ -10,23 +10,6 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" type="text/css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
-  <style>
-    .alert-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-      max-width: 300px;
-    }
-    .alert {
-      background-color: #f8f9fa;
-      color: #333;
-      border: 1px solid #ddd;
-    }
-    .highlight {
-      background-color: #f0f0f0;
-    }
-  </style>
 </head>
 
 <body style="background-color: #3b3a3a">
@@ -73,7 +56,7 @@
           </div>
           <div class="inbox_chat">
             {% for i in data %}
-            <a href="{{ url_for('views.chat', rid=i.room_id) }}" class="chat_list_link" data-room-id="{{ i.room_id }}">
+            <a href="{{ url_for('views.chat',rid=i.room_id) }}">
               <div class="chat_list" id="{{ i.room_id }}">
                 <div class="chat_people">
                   <div class="chat_img">
@@ -123,38 +106,10 @@
       </div>
     </div>
   </div>
-
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const chatListLinks = document.querySelectorAll('.chat_list_link');
-
-      chatListLinks.forEach(link => {
-        link.addEventListener('click', function (e) {
-          // Get the room ID of the clicked chat item
-          const roomId = link.getAttribute('data-room-id');
-
-          // Store the selected room ID in local storage
-          localStorage.setItem('selectedChatRoom', roomId);
-
-          // Remove highlight from all chat items
-          chatListLinks.forEach(link => link.querySelector('.chat_list').classList.remove('highlight'));
-
-          // Highlight the clicked chat item
-          link.querySelector('.chat_list').classList.add('highlight');
-        });
-      });
-
-      // On page load, highlight the previously selected chat item
-      const selectedChatRoom = localStorage.getItem('selectedChatRoom');
-      if (selectedChatRoom) {
-        const selectedChatElement = document.querySelector(`.chat_list_link[data-room-id="${selectedChatRoom}"] .chat_list`);
-        if (selectedChatElement) {
-          selectedChatElement.classList.add('highlight');
-        }
-      }
-
       // Decrypt the recent chat messages
       const recentChats = document.querySelectorAll('.chat_ib p[data-encrypted="true"]');
       recentChats.forEach(function (p) {
@@ -180,7 +135,8 @@
         }
       });
     });
-
+  </script>
+  <script>
     $(document).ready(function () {
       var socket = io.connect(window.location.origin);
       socket.on("new_message", function (data) {
@@ -212,22 +168,46 @@
         $("#msg_history").append(html);
       }
     });
+  </script>
+  <script type="text/javascript">
+    let msgH = document.querySelectorAll(".msg_history > div"), CurrentLen;
+    let init = () => {
+      CurrentLen = msgH.length;
+    }
+    init();
+    let validatePosition = () => {
+      if (msgH.length === CurrentLen) {
+        msgH[msgH.length - 1].setAttribute("id", "last_message");
+        for (var i; i < msgH.length; i++) {
+          if (msgH[i].id === "last_message" && msgH[i] !== msgH.length - 1) {
+            msgH[i].removeAttribute("id");
+            msgH[msgH.length - 1].setAttribute("id", "last_message");
+          }
+        }
+      }
+    }
+    let scrollDown = () => {
+      validatePosition();
+      location.href = "#last_message";
+      init();
+    }
 
+    // SOCKET CODE
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/?rid=' + {{ room_id }} );
     socket.on('connect', function () {
       socket.emit('join-chat', {
         rid: '{{ room_id }}'
-      });
-    });
+      })
+    })
 
     socket.on('joined-chat', function (msg) {
-      console.log(msg);
-    });
+      console.log(msg)
+    })
 
     var form = $('#chat_form').on('submit', function (e) {
       e.preventDefault();
       let user_input = $('input.message').val();
-      let encrypted = CryptoJS.AES.encrypt(user_input, 'secret key').toString();  // Use a secure key management system
+      let encrypted = CryptoJS.AES.encrypt(user_input, 'secret key').toString();
 
       socket.emit('outgoing', {
         timestamp: parseInt(Date.now() / 1000),
@@ -236,7 +216,6 @@
         message: encrypted,
         rid: '{{ room_id }}'
       });
-      // Add the encrypted message to the UI (or you could choose not to display it)
       var timeDate = formatDate(new Date());
       $('div.msg_history').append(`
         <div class="outgoing_msg">
@@ -262,7 +241,8 @@
         </div>`);
       scrollDown();
     });
-
+  </script>
+  <script>
     function formatDate(date) {
       const hours = date.getHours();
       let formattedHours = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
@@ -272,7 +252,9 @@
       const timeFormat = `${formattedHours}:${minutes} ${hours >= 12 ? "PM" : "AM"} | ${month}/${day}`;
       return timeFormat;
     }
+  </script>
 
+  <script>
     window.onload = function () {
       let newChatBtn = document.querySelector("#new_chat_btn");
       let newChatForm = document.querySelector("#new_chat_form");
@@ -290,7 +272,8 @@
         }
       };
     };
-
+  </script>
+  <script>
     document.addEventListener("DOMContentLoaded", function () {
       const profileIcon = document.getElementById("profile-icon");
       const profileMenu = document.getElementById("profile-menu");

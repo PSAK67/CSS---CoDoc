@@ -14,6 +14,8 @@ class User(db.Model):
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     otp = db.Column(db.String(6), nullable=True)
     is_verified = db.Column(db.Boolean, default=False)
+    public_key = db.Column(db.Text, nullable=False)
+    private_key = db.Column(db.Text, nullable=False)
 
     def set_password(self, password):
         self.password = pbkdf2_sha256.hash(password)

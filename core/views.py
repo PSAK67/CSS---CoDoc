@@ -4,61 +4,71 @@ from core import socket
 from core.helper import generate_otp, generate_token, confirm_token
 from core.email_helper import send_verification_email, send_forget_email
 from core.decorators import login_required
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+import base64
 
-views = Blueprint('views', __name__, static_folder='static',
-                  template_folder='templates')
-
-
+views = Blueprint('views', __name__, static_folder='static', template_folder='templates')
 
 @views.route("/", methods=["GET", "POST"])
 def index():
-    """Redirects to the login/register page."""
     return redirect(url_for("views.login"))
 
-
-@views.route("/register", methods=["GET", "POST"])
+@views.route('/register', methods=['GET', 'POST'])
 def register():
-    """Handles new user registration and OTP email sending."""
     if request.method == "POST":
         email = request.form["email"].strip().lower()
         username = request.form["username"].strip().lower()
         password = request.form["password"]
 
-        # Check if the email already exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             if not existing_user.is_verified:
-                # Resend OTP
                 otp = generate_otp()
+                print("OTP", otp)
                 existing_user.otp = otp
                 db.session.commit()
                 send_verification_email(email, existing_user.username, otp)
-                flash(
-                    "User already exists but is not verified. OTP has been resent to your email.")
+                flash("User already exists but is not verified. OTP has been resent to your email.")
                 return redirect(url_for("views.verify_otp"))
             flash("User already exists with that email.")
             return redirect(url_for("views.login"))
 
-        # Generate OTP and create new user
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+        public_key = private_key.public_key()
+
+        pem_private_key = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        pem_public_key = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
         otp = generate_otp()
-        print("OTP  ----", otp)
         new_user = User(username=username, email=email,
-                        password=password, otp=otp, is_verified=False)
+                        password=password, otp=otp, is_verified=False,
+                        public_key=pem_public_key.decode('utf-8'),
+                        private_key=pem_private_key.decode('utf-8'))
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
 
-        # Send verification email
         send_verification_email(email, username, otp)
         flash("Registration successful. An OTP has been sent to your email.")
         return redirect(url_for("views.verify_otp"))
 
     return render_template("authentication.html")
 
-
 @views.route("/verify-otp", methods=["GET", "POST"])
 def verify_otp():
-    """Verifies the OTP entered by the user."""
     if request.method == "POST":
         otp = request.form["otp"].strip()
         user = User.query.filter_by(otp=otp).first()
@@ -74,10 +84,8 @@ def verify_otp():
 
     return render_template("verify_otp.html")
 
-
 @views.route("/login", methods=["GET", "POST"])
 def login():
-    """Handles user login and session creation."""
     if request.method == "POST":
         email = request.form["email"].strip().lower()
         password = request.form["password"]
@@ -85,15 +93,13 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
-            session["user"] = {"id": user.id,
-                               "username": user.username, "email": user.email}
+            session["user"] = {"id": user.id, "username": user.username, "email": user.email}
             return redirect(url_for("views.chat"))
         else:
             flash("Invalid login credentials. Please try again.")
             return redirect(url_for("views.login"))
 
     return render_template("authentication.html")
-
 
 @views.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
@@ -104,7 +110,6 @@ def forgot_password():
         if user:
             token = generate_token(user.email)
             link = f"http://{domain}/reset-password/{token}"
-            print(link)
             send_forget_email(email, link=link)
             flash("Password reset link has been sent to your email.")
             return redirect(url_for("views.login"))
@@ -113,7 +118,6 @@ def forgot_password():
             return redirect(url_for("forgot_password"))
 
     return render_template("forget_password.html")
-
 
 @views.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
@@ -143,106 +147,86 @@ def reset_password(token):
 
     return render_template("set_password.html", token=token)
 
-
 @views.route("/new-chat", methods=["POST"])
 @login_required
 def new_chat():
-    """
-    Creates a new chat room and adds users to the chat list.
-
-    Returns:
-        Response: Flask response object.
-    """
     user_id = session["user"]["id"]
     new_chat_email = request.form["email"].strip().lower()
 
-    # If user is trying to add themselves, do nothing
     if new_chat_email == session["user"]["email"]:
         return redirect(url_for("views.chat"))
 
-    # Check if the recipient user exists
     recipient_user = User.query.filter_by(email=new_chat_email).first()
     if not recipient_user:
         return redirect(url_for("views.chat"))
 
-    # Check if the chat already exists
     existing_chat = Chat.query.filter_by(user_id=user_id).first()
     if not existing_chat:
         existing_chat = Chat(user_id=user_id, chat_list=[])
         db.session.add(existing_chat)
         db.session.commit()
 
-    # Check if the new chat is already in the chat list
     if recipient_user.id not in [user_chat["user_id"] for user_chat in existing_chat.chat_list]:
-        # Generate a room_id (you may use your logic to generate it)
         room_id = str(int(recipient_user.id) + int(user_id))[-4:]
 
-        # Add the new chat to the chat list of the current user
-        updated_chat_list = existing_chat.chat_list + \
-            [{"user_id": recipient_user.id, "room_id": room_id}]
+        updated_chat_list = existing_chat.chat_list + [{"user_id": recipient_user.id, "room_id": room_id}]
         existing_chat.chat_list = updated_chat_list
-
-        # Save the changes to the database
         existing_chat.save_to_db()
 
-        # Create a new chat list for the recipient user if it doesn't exist
-        recipient_chat = Chat.query.filter_by(
-            user_id=recipient_user.id).first()
+        recipient_chat = Chat.query.filter_by(user_id=recipient_user.id).first()
         if not recipient_chat:
             recipient_chat = Chat(user_id=recipient_user.id, chat_list=[])
             db.session.add(recipient_chat)
             db.session.commit()
 
-        # Add the new chat to the chat list of the recipient user
-        updated_chat_list = recipient_chat.chat_list + \
-            [{"user_id": user_id, "room_id": room_id}]
+        updated_chat_list = recipient_chat.chat_list + [{"user_id": user_id, "room_id": room_id}]
         recipient_chat.chat_list = updated_chat_list
         recipient_chat.save_to_db()
 
-        # Create a new message entry for the chat room
         new_message = Message(room_id=room_id)
         db.session.add(new_message)
         db.session.commit()
 
-    return redirect(url_for("views.chat"))
-
+    return redirect(url_for("views.chat", rid=room_id))
 
 @views.route("/chat/", methods=["GET", "POST"])
 @login_required
 def chat():
-    """
-    Renders the chat interface and displays chat messages.
-
-    Returns:
-        Response: Flask response object.
-    """
-    # Get the room id in the URL or set to None
     room_id = request.args.get("rid", None)
 
-    # Get the chat list for the user
     current_user_id = session["user"]["id"]
     current_user_chats = Chat.query.filter_by(user_id=current_user_id).first()
     chat_list = current_user_chats.chat_list if current_user_chats else []
 
-    # Initialize context that contains information about the chat room
     data = []
 
+    current_user = User.query.get(current_user_id)
+    current_user_private_key = serialization.load_pem_private_key(
+        current_user.private_key.encode('utf-8'),
+        password=None,
+    )
+
     for chat in chat_list:
-        # Query the database to get the username of users in a user's chat list
         username = User.query.get(chat["user_id"]).username
         is_active = room_id == chat["room_id"]
 
         try:
-            # Get the Message object for the chat room
             message = Message.query.filter_by(room_id=chat["room_id"]).first()
-
-            # Get the last ChatMessage object in the Message's messages relationship
             last_message = message.messages[-1]
-
-            # Get the message content of the last ChatMessage object
-            last_message_content = last_message.content
+            # Determine which user's private key to use for decryption
+            if last_message.sender_id == current_user_id:
+                recipient_user = User.query.get(chat["user_id"])
+                if recipient_user and recipient_user.private_key:
+                    recipient_private_key = serialization.load_pem_private_key(
+                        recipient_user.private_key.encode('utf-8'),
+                        password=None,
+                    )
+                    last_message_content = decrypt_message(last_message.content, recipient_private_key)
+                else:
+                    last_message_content = "Decryption failed: Recipient user not found or missing private key."
+            else:
+                last_message_content = decrypt_message(last_message.content, current_user_private_key)
         except (AttributeError, IndexError):
-            # Set variable to this when no messages have been sent to the room
             last_message_content = "This place is empty. No messages ..."
 
         data.append({
@@ -250,73 +234,135 @@ def chat():
             "room_id": chat["room_id"],
             "is_active": is_active,
             "last_message": last_message_content,
+            "recipient_id": chat["user_id"] if room_id == chat["room_id"] else None
         })
 
-    # Get all the message history in a certain room
-    messages = Message.query.filter_by(
-        room_id=room_id).first().messages if room_id else []
+    # Fetch all messages in the room
+    messages = []
+    if room_id:
+        message_entry = Message.query.filter_by(room_id=room_id).first()
+        if message_entry:
+            messages = message_entry.messages
+
+    # Debugging output: Check how many messages were fetched
+    print(f"Fetched {len(messages)} messages for room ID {room_id}")
+
+    # Identify the recipient (the other user in the chat room)
+    recipient_id = None
+    for chat in chat_list:
+        if chat["room_id"] == room_id:
+            recipient_id = chat["user_id"]
+            break
+
+    recipient_user = User.query.get(recipient_id)
+    if recipient_user and recipient_user.private_key:
+        recipient_private_key = serialization.load_pem_private_key(
+            recipient_user.private_key.encode('utf-8'),
+            password=None,
+        )
+    else:
+        recipient_private_key = None
+
+    decrypted_messages = []
+    for msg in messages:
+        try:
+            if msg.sender_id == current_user_id:
+                # Sent message, decrypt using recipient's private key if available
+                if recipient_private_key:
+                    decrypted_message = recipient_private_key.decrypt(
+                        base64.b64decode(msg.content.encode('utf-8')),
+                        padding.OAEP(
+                            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                            algorithm=hashes.SHA256(),
+                            label=None
+                        )
+                    )
+                    decrypted_messages.append({
+                        "sender_username": msg.sender_username,
+                        "content": decrypted_message.decode('utf-8'),
+                        "timestamp": msg.timestamp,
+                        "is_sent": True
+                    })
+                else:
+                    decrypted_messages.append({
+                        "sender_username": msg.sender_username,
+                        "content": "Decryption failed: Recipient user not found or missing private key.",
+                        "timestamp": msg.timestamp,
+                        "is_sent": True
+                    })
+            else:
+                # Received message, decrypt using current user's private key
+                decrypted_message = current_user_private_key.decrypt(
+                    base64.b64decode(msg.content.encode('utf-8')),
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None
+                    )
+                )
+                decrypted_messages.append({
+                    "sender_username": msg.sender_username,
+                    "content": decrypted_message.decode('utf-8'),
+                    "timestamp": msg.timestamp,
+                    "is_sent": False
+                })
+        except ValueError as e:
+            print(f"Decryption failed for message ID {msg.id}: {e}")
+            continue
+
+    # Debugging output: Check decrypted messages
+    for msg in decrypted_messages:
+        print(f"Decrypted message from {msg['sender_username']}: {msg['content']} (Sent: {msg['is_sent']})")
 
     return render_template(
         "chat_template.html",
         user_data=session["user"],
         room_id=room_id,
         data=data,
-        messages=messages,
+        messages=decrypted_messages,
     )
 
+def decrypt_message(encrypted_message, private_key):
+    try:
+        decrypted_message = private_key.decrypt(
+            base64.b64decode(encrypted_message.encode('utf-8')),
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+        return decrypted_message.decode('utf-8')
+    except ValueError as e:
+        print(f"Decryption failed: {e}")
+        return "Decryption failed"
 
-# Custom time filter to be used in the jinja template
+
 @views.app_template_filter("ftime")
 def ftime(date):
-    dt = datetime.fromtimestamp(int(date))
-    time_format = "%I:%M %p"  # Use  %I for 12-hour clock format and %p for AM/PM
-
-    formatted_time = dt.strftime("%d %B")
-
-    formatted_time += "  " + dt.strftime(time_format)
-    return formatted_time
-
+    try:
+        dt = datetime.fromtimestamp(int(date)/1000)  # Divide by 1000 if timestamp is in milliseconds
+        return dt.strftime("%d %B %I:%M %p")
+    except (ValueError, OSError) as e:
+        print(f"Error formatting date: {e}")
+        return "Invalid Date"
 
 @views.route('/visualize')
 def visualize():
-    """
-    TODO: Utilize pandas and matplotlib to analyze the number of users registered to the app.
-    Create a chart of the analysis and convert it to base64 encoding for display in the template.
-
-    Returns:
-        Response: Flask response object.
-    """
     pass
-
 
 @views.route('/get_name')
 def get_name():
-    """
-    :return: json object with username
-    """
     data = {'name': ''}
     if 'username' in session:
         data = {'name': session['username']}
-
     return jsonify(data)
-
 
 @views.route('/get_messages')
 def get_messages():
-    """
-    query the database for messages o in a particular room id
-    :return: all messages
-    """
     pass
-
 
 @views.route('/leave')
 def leave():
-    """
-    Emits a 'disconnect' event and redirects to the home page.
-
-    Returns:
-        Response: Flask response object.
-    """
     socket.emit('disconnect')
     return redirect(url_for('views.home'))

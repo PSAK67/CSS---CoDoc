@@ -11,3 +11,4 @@ Flask-Mail
 itsdangerous
 cryptography
 gunicorn
+eventlet

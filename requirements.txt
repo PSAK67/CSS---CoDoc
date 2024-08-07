@@ -12,3 +12,5 @@ itsdangerous
 cryptography
 gunicorn
 eventlet
+gevent-websocket
+Flask-SocketIO

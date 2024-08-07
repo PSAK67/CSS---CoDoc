@@ -129,7 +129,7 @@
             window.location.href = "/login"; 
         });
 
-        const socket = io.connect(window.location.origin);
+        const socket = io('/', {transports: ['websocket'], upgrade: false, path: '/socket.io'});
         socket.on("connect", function () {
             console.log("Connected to the server");
             const roomId = "{{ room_id }}";

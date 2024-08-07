@@ -10,3 +10,4 @@ passlib
 Flask-Mail
 itsdangerous
 cryptography
+gunicorn

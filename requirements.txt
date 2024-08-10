@@ -14,3 +14,5 @@ gunicorn
 eventlet
 gevent-websocket
 Flask-SocketIO
+gevent
+greenlet

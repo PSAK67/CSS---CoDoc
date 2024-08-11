@@ -72,5 +72,6 @@ def chatting_event(json, methods=["GET", "POST"]):
     })
 
 if __name__ == "__main__":
-    socket.run(app, allow_unsafe_werkzeug=True, debug=True)
+    # socket.run(app, allow_unsafe_werkzeug=True, debug=True)
     # app.run()
+    socket.run(app, host='0.0.0.0', port=5000)

@@ -12,10 +12,16 @@ mail = Mail()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    socketio_kwargs = {
+        'async_mode': 'eventlet',
+        'cors_allowed_origins': "*",  # Be more specific in production
+        'logger': True,
+        'engineio_logger': True
+    }
 
     # Initialize extensions
     db.init_app(app)
-    socket.init_app(app, cors_allowed_origins="*")
+    socket.init_app(app, **socketio_kwargs)
     mail.init_app(app)
     cors.init_app(app)
 
